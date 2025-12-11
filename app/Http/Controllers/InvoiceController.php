@@ -1,0 +1,198 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Consultation;
+use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+
+class InvoiceController extends Controller
+{
+    /**
+     * Display a listing of invoices.
+     */
+    public function index(Request $request)
+    {
+        $query = Invoice::with(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items']);
+
+        // Search functionality
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('consultation.appointment.patient', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })->orWhereHas('consultation.appointment.doctor', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Filter by payment status
+        if ($request->has('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        // Filter by date range
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+
+        $invoices = $query->latest()->paginate(20);
+
+        return view('admin.invoices.index', compact('invoices'));
+    }
+
+    /**
+     * Show the form for creating a new invoice.
+     */
+    public function create()
+    {
+        // Get consultations without invoices
+        $availableConsultations = Consultation::whereDoesntHave('invoice')
+            ->with(['appointment.patient', 'appointment.doctor'])
+            ->get();
+
+        return view('admin.invoices.create', compact('availableConsultations'));
+    }
+
+    /**
+     * Store a newly created invoice.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'consultation_id' => 'required|exists:consultations,id',
+            'payment_status' => 'required|in:pending,paid,partial,cancelled',
+            'services' => 'required|array|min:1',
+            'services.*.description' => 'required|string|max:255',
+            'services.*.fee' => 'required|numeric|min:0',
+        ]);
+
+        // Check if consultation already has an invoice
+        $existingInvoice = Invoice::where('consultation_id', $request->consultation_id)->exists();
+        if ($existingInvoice) {
+            return back()->withErrors(['consultation_id' => 'This consultation already has an invoice.'])->withInput();
+        }
+
+        // Calculate total amount
+        $totalAmount = collect($request->services)->sum('fee');
+
+        $invoice = Invoice::create([
+            'consultation_id' => $request->consultation_id,
+            'payment_status' => $request->payment_status,
+            'total_amount' => $totalAmount,
+        ]);
+
+        // Create invoice items
+        foreach ($request->services as $service) {
+            InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'service_description' => $service['description'],
+                'fee' => $service['fee'],
+            ]);
+        }
+
+        return redirect()->route('admin.invoices.index')
+            ->with('success', 'Invoice created successfully.');
+    }
+
+    /**
+     * Display the specified invoice.
+     */
+    public function show(Invoice $invoice)
+    {
+        $invoice->load(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items']);
+        return view('admin.invoices.show', compact('invoice'));
+    }
+
+    /**
+     * Show the form for editing the specified invoice.
+     */
+    public function edit(Invoice $invoice)
+    {
+        $invoice->load(['items', 'consultation.appointment.patient', 'consultation.appointment.doctor']);
+        return view('admin.invoices.edit', compact('invoice'));
+    }
+
+    /**
+     * Update the specified invoice.
+     */
+    public function update(Request $request, Invoice $invoice)
+    {
+        $request->validate([
+            'payment_status' => 'required|in:pending,paid,partial,cancelled',
+            'services' => 'required|array|min:1',
+            'services.*.description' => 'required|string|max:255',
+            'services.*.fee' => 'required|numeric|min:0',
+        ]);
+
+        // Calculate total amount
+        $totalAmount = collect($request->services)->sum('fee');
+
+        $invoice->update([
+            'payment_status' => $request->payment_status,
+            'total_amount' => $totalAmount,
+        ]);
+
+        // Delete existing items and create new ones
+        $invoice->items()->delete();
+
+        foreach ($request->services as $service) {
+            InvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'service_description' => $service['description'],
+                'fee' => $service['fee'],
+            ]);
+        }
+
+        return redirect()->route('admin.invoices.index')
+            ->with('success', 'Invoice updated successfully.');
+    }
+
+    /**
+     * Remove the specified invoice.
+     */
+    public function destroy(Invoice $invoice)
+    {
+        $invoice->delete();
+
+        return redirect()->route('admin.invoices.index')
+            ->with('success', 'Invoice deleted successfully.');
+    }
+
+    /**
+     * Mark invoice as paid.
+     */
+    public function markAsPaid(Invoice $invoice)
+    {
+        $invoice->update(['payment_status' => 'paid']);
+
+        return redirect()->route('admin.invoices.index')
+            ->with('success', 'Invoice marked as paid.');
+    }
+
+    /**
+     * Download invoice as PDF.
+     */
+    public function download(Invoice $invoice)
+    {
+        $invoice->load(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items']);
+
+        $pdf = Pdf::loadView('admin.invoices.pdf', compact('invoice'));
+
+        // Generate filename
+        $filename = 'invoice-' . $invoice->id . '-' . date('Y-m-d') . '.pdf';
+
+        // Save to storage
+        Storage::put('invoices/' . $filename, $pdf->output());
+
+        // Update invoice with PDF path
+        $invoice->update(['pdf_path' => 'invoices/' . $filename]);
+
+        return $pdf->download($filename);
+    }
+}

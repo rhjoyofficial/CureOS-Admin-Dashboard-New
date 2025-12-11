@@ -1,0 +1,207 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Patient;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+
+class PatientSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Get any active staff user or admin as fallback
+        $receptionist = User::role('Staff')->active()->first()
+            ?? User::role('Admin')->active()->first()
+            ?? User::first(); // Fallback to any user
+
+        // If no user exists yet, create one
+        if (!$receptionist) {
+            $receptionist = User::create([
+                'name' => 'Receptionist',
+                'email' => 'reception@clinic.com',
+                'phone' => '01720000000',
+                'password' => bcrypt('password123'),
+                'status' => 'active',
+                'email_verified_at' => now(),
+            ]);
+            $receptionist->assignRole('Staff');
+        }
+
+        $patients = [
+            [
+                'name' => 'Abdul Karim',
+                'phone' => '01810000001',
+                'email' => 'karim@example.com',
+                'date_of_birth' => '1978-03-15',
+                'gender' => 'Male',
+                'father_name' => 'Md. Rahman',
+                'mother_name' => 'Ayesha Begum',
+                'husband_wife_name' => 'Fatima Begum',
+                'occupation' => 'Businessman',
+                'division' => 'Dhaka',
+                'district' => 'Dhaka',
+                'upazila' => 'Dhanmondi',
+                'village' => 'Dhanmondi Area',
+                'post_office' => 'Dhanmondi',
+                'post_code' => '1205',
+                'full_address' => 'House #45, Road #8, Dhanmondi, Dhaka',
+                'blood_group' => 'B+',
+                'marital_status' => 'Married',
+                'religion' => 'Islam',
+                'nationality' => 'Bangladeshi',
+                'nid' => '1111111111',
+                'emergency_contact_name' => 'Fatima Begum',
+                'emergency_contact_phone' => '01810000002',
+                'emergency_contact_relation' => 'Wife',
+                'allergies' => 'None',
+                'current_medications' => 'Blood pressure medicine',
+                'past_medical_history' => 'Hypertension since 2010',
+                'family_medical_history' => 'Father had diabetes',
+                'habits' => 'Non-smoker, occasional social drinker',
+                'created_by' => $receptionist->id,
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Nusrat Jahan',
+                'phone' => '01810000003',
+                'email' => 'nusrat@example.com',
+                'date_of_birth' => '1992-07-22',
+                'gender' => 'Female',
+                'father_name' => 'Md. Salam',
+                'mother_name' => 'Rahima Begum',
+                'husband_wife_name' => null,
+                'occupation' => 'Teacher',
+                'division' => 'Dhaka',
+                'district' => 'Dhaka',
+                'upazila' => 'Mirpur',
+                'village' => 'Mirpur DOHS',
+                'post_office' => 'Mirpur',
+                'post_code' => '1216',
+                'full_address' => 'Flat #B4, Building #12, Mirpur DOHS',
+                'blood_group' => 'O+',
+                'marital_status' => 'Unmarried',
+                'religion' => 'Islam',
+                'nationality' => 'Bangladeshi',
+                'nid' => '2222222222',
+                'emergency_contact_name' => 'Md. Salam',
+                'emergency_contact_phone' => '01810000004',
+                'emergency_contact_relation' => 'Father',
+                'allergies' => 'Penicillin',
+                'current_medications' => 'None',
+                'past_medical_history' => 'Appendectomy in 2015',
+                'family_medical_history' => 'Mother has arthritis',
+                'habits' => 'Non-smoker, non-drinker',
+                'created_by' => $receptionist->id,
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Rahim Uddin',
+                'phone' => '01810000005',
+                'email' => 'rahim@example.com',
+                'date_of_birth' => '1965-11-30',
+                'gender' => 'Male',
+                'father_name' => 'Md. Ali',
+                'mother_name' => 'Sufia Begum',
+                'husband_wife_name' => 'Mina Begum',
+                'occupation' => 'Retired Government Officer',
+                'division' => 'Dhaka',
+                'district' => 'Dhaka',
+                'upazila' => 'Uttara',
+                'village' => 'Uttara Sector 7',
+                'post_office' => 'Uttara',
+                'post_code' => '1230',
+                'full_address' => 'House #78, Road #12, Uttara Sector 7, Dhaka',
+                'blood_group' => 'A+',
+                'marital_status' => 'Married',
+                'religion' => 'Islam',
+                'nationality' => 'Bangladeshi',
+                'nid' => '3333333333',
+                'emergency_contact_name' => 'Mina Begum',
+                'emergency_contact_phone' => '01810000006',
+                'emergency_contact_relation' => 'Wife',
+                'allergies' => 'None',
+                'current_medications' => 'Diabetes medication',
+                'past_medical_history' => 'Type 2 Diabetes since 2012',
+                'family_medical_history' => 'Both parents had diabetes',
+                'habits' => 'Non-smoker, non-drinker',
+                'created_by' => $receptionist->id,
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Sonia Rahman',
+                'phone' => '01810000007',
+                'email' => 'sonia@example.com',
+                'date_of_birth' => '1988-04-18',
+                'gender' => 'Female',
+                'father_name' => 'Md. Kamal',
+                'mother_name' => 'Nazma Begum',
+                'husband_wife_name' => 'Shahriar Ahmed',
+                'occupation' => 'Banker',
+                'division' => 'Dhaka',
+                'district' => 'Dhaka',
+                'upazila' => 'Gulshan',
+                'village' => 'Gulshan 2',
+                'post_office' => 'Gulshan',
+                'post_code' => '1212',
+                'full_address' => 'Flat #5A, House #12, Road #45, Gulshan 2',
+                'blood_group' => 'AB+',
+                'marital_status' => 'Married',
+                'religion' => 'Islam',
+                'nationality' => 'Bangladeshi',
+                'nid' => '4444444444',
+                'birth_certificate_no' => '1998DHK12345',
+                'emergency_contact_name' => 'Shahriar Ahmed',
+                'emergency_contact_phone' => '01810000008',
+                'emergency_contact_relation' => 'Husband',
+                'allergies' => 'Dust allergy',
+                'current_medications' => 'Antihistamines',
+                'past_medical_history' => 'Asthma since childhood',
+                'family_medical_history' => 'Mother has asthma',
+                'habits' => 'Non-smoker, non-drinker',
+                'created_by' => $receptionist->id,
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Bijoy Chakma',
+                'phone' => '01810000009',
+                'email' => 'bijoy@example.com',
+                'date_of_birth' => '1995-09-25',
+                'gender' => 'Male',
+                'father_name' => 'Sujan Chakma',
+                'mother_name' => 'Mala Chakma',
+                'husband_wife_name' => null,
+                'occupation' => 'Software Engineer',
+                'division' => 'Chittagong',
+                'district' => 'Rangamati',
+                'upazila' => 'Rangamati Sadar',
+                'village' => 'Rajbari Area',
+                'post_office' => 'Rangamati',
+                'post_code' => '4500',
+                'full_address' => 'House #23, Rajbari Area, Rangamati',
+                'blood_group' => 'O-',
+                'marital_status' => 'Unmarried',
+                'religion' => 'Buddhism',
+                'nationality' => 'Bangladeshi',
+                'nid' => '5555555555',
+                'emergency_contact_name' => 'Sujan Chakma',
+                'emergency_contact_phone' => '01810000010',
+                'emergency_contact_relation' => 'Father',
+                'allergies' => 'None',
+                'current_medications' => 'None',
+                'past_medical_history' => 'Broken leg in 2018',
+                'family_medical_history' => 'Father has hypertension',
+                'habits' => 'Non-smoker, social drinker occasionally',
+                'created_by' => $receptionist->id,
+                'status' => 'active',
+            ],
+        ];
+
+        foreach ($patients as $patient) {
+            // Check if patient with this phone already exists
+            if (!Patient::where('phone', $patient['phone'])->exists()) {
+                Patient::create($patient);
+            }
+        }
+    }
+}
