@@ -16,27 +16,26 @@ class PrescriptionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Prescription::with(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items']);
+        $query = Prescription::with(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items'])
+            ->whereHas('consultation.appointment.patient');
 
-        // Search functionality
-        if ($request->has('search')) {
+        $query->when($request->filled('search'), function ($q) use ($request) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('consultation.appointment.patient', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
-                })->orWhereHas('consultation.appointment.doctor', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
+            $q->where(function ($sub) use ($search) {
+                $sub->whereHas('consultation.appointment.patient', function ($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })->orWhereHas('consultation.appointment.doctor', function ($d) use ($search) {
+                    $d->where('name', 'like', "%{$search}%");
                 });
             });
-        }
+        });
 
-        // Filter by date
-        if ($request->has('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
+        $query->when($request->filled('date'), function ($q) use ($request) {
+            $q->whereDate('created_at', $request->date);
+        });
 
-        $prescriptions = $query->latest()->paginate(20);
+        $prescriptions = $query->latest()->paginate(20)->withQueryString();
 
         return view('admin.prescriptions.index', compact('prescriptions'));
     }
@@ -133,7 +132,7 @@ class PrescriptionController extends Controller
 
         // Delete existing items and create new ones
         $prescription->items()->delete();
-        
+
         foreach ($request->medicines as $medicine) {
             PrescriptionItem::create([
                 'prescription_id' => $prescription->id,
@@ -165,18 +164,18 @@ class PrescriptionController extends Controller
     public function download(Prescription $prescription)
     {
         $prescription->load(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items']);
-        
+
         $pdf = Pdf::loadView('admin.prescriptions.pdf', compact('prescription'));
-        
+
         // Generate filename
         $filename = 'prescription-' . $prescription->id . '-' . date('Y-m-d') . '.pdf';
-        
+
         // Save to storage
         Storage::put('prescriptions/' . $filename, $pdf->output());
-        
+
         // Update prescription with PDF path
         $prescription->update(['pdf_path' => 'prescriptions/' . $filename]);
-        
+
         return $pdf->download($filename);
     }
 }

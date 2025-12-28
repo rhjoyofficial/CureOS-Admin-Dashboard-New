@@ -23,6 +23,10 @@ export default {
             },
             fontFamily: {
                 inter: ["Inter", ...defaultTheme.fontFamily.sans],
+                bengali: [
+                    '"Noto Sans Bengali"',
+                    ...defaultTheme.fontFamily.sans,
+                ],
             },
             colors: {
                 primary: "#3e60d5",

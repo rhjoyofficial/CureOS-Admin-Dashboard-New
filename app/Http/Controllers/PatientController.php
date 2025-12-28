@@ -17,36 +17,37 @@ class PatientController extends Controller
         $query = Patient::with('creator');
 
         // Search functionality
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+        $query->when($request->search, function ($q, $search) {
+            $q->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('patient_id', 'like', "%{$search}%")
                     ->orWhere('nid', 'like', "%{$search}%");
             });
-        }
+        });
 
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
+        // Filter by status (Only applies if status is not empty)
+        $query->when($request->status, function ($q, $status) {
+            $q->where('status', $status);
+        });
 
-        // Filter by gender
-        if ($request->has('gender')) {
-            $query->where('gender', $request->gender);
-        }
+        // Filter by gender (Only applies if gender is not empty)
+        $query->when($request->gender, function ($q, $gender) {
+            $q->where('gender', $gender);
+        });
 
-        // Filter by district
-        if ($request->has('district')) {
-            $query->where('district', $request->district);
-        }
+        // Filter by district (Only applies if district is not empty)
+        $query->when($request->district, function ($q, $district) {
+            $q->where('district', $district);
+        });
 
-        $patients = $query->latest()->paginate(20);
+        $patients = $query->latest()->paginate(20)->withQueryString();
 
-        // Get unique districts for filter
-        $districts = Patient::select('district')->whereNotNull('district')->distinct()->pluck('district');
+        // Optimize: Get unique districts only from existing patients
+        $districts = Patient::whereNotNull('district')
+            ->distinct()
+            ->pluck('district');
 
         return view('admin.patients.index', compact('patients', 'districts'));
     }
@@ -144,7 +145,13 @@ class PatientController extends Controller
      */
     public function show(Patient $patient)
     {
-        $patient->load(['creator', 'appointments.doctor', 'consultations', 'prescriptions']);
+        // Load the full chain to get to prescriptions
+        $patient->load([
+            'creator',
+            'appointments.doctor',
+            'appointments.consultation.prescription'
+        ]);
+
         return view('admin.patients.show', compact('patient'));
     }
 

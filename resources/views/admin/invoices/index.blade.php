@@ -92,7 +92,7 @@
                     <div>
                         <p class="text-sm font-medium text-gray-600">Total Revenue</p>
                         <p class="text-3xl font-bold text-gray-900 mt-2">
-                            ৳{{ number_format($invoices->sum('total_amount'), 2) }}
+                            <span class="font-bengali">৳</span>{{ number_format($invoices->sum('total_amount'), 2) }}
                         </p>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -198,7 +198,7 @@
                                 <!-- Amount -->
                                 <td class="px-6 py-4">
                                     <div class="text-lg font-bold text-gray-900">
-                                        ৳{{ number_format($invoice->total_amount, 2) }}
+                                        <span class="font-bengali">৳</span>{{ number_format($invoice->total_amount, 2) }}
                                     </div>
                                     <div class="text-sm text-gray-500">
                                         {{ $invoice->items->count() }} items
@@ -302,4 +302,3 @@
         </div>
     </div>
 @endsection
-

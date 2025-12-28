@@ -105,7 +105,8 @@
                             <div>
                                 <p class="text-sm text-gray-500">Consultation Fee</p>
                                 <p class="font-medium text-gray-900">
-                                    ৳{{ number_format($invoice->consultation->appointment->doctor->consultation_fee ?? 0, 2) }}
+                                    <span
+                                        class="font-bengali">৳</span>{{ number_format($invoice->consultation->appointment->doctor->consultation_fee ?? 0, 2) }}
                                 </p>
                             </div>
                             <div>
@@ -133,7 +134,8 @@
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <p class="text-sm text-gray-500">Total Amount</p>
-                            <p class="font-bold text-gray-900 text-lg">৳{{ number_format($invoice->total_amount, 2) }}</p>
+                            <p class="font-bold text-gray-900 text-lg"><span
+                                    class="font-bengali">৳</span>{{ number_format($invoice->total_amount, 2) }}</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <p class="text-sm text-gray-500">Invoice Date</p>
@@ -174,7 +176,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                            ৳{{ number_format($item->fee, 2) }}
+                                            <span class="font-bengali">৳</span>{{ number_format($item->fee, 2) }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -184,7 +186,7 @@
                                         Total Amount:
                                     </td>
                                     <td class="px-6 py-4 text-xl font-bold text-gray-900">
-                                        ৳{{ number_format($invoice->total_amount, 2) }}
+                                        <span class="font-bengali">৳</span>{{ number_format($invoice->total_amount, 2) }}
                                     </td>
                                 </tr>
                             </tbody>

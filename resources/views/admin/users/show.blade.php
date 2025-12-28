@@ -253,7 +253,9 @@
                                     <div class="ml-3">
                                         <p class="text-sm text-gray-500">Consultation Fee</p>
                                         <p class="font-medium text-gray-900">
-                                            ৳{{ number_format($user->consultation_fee ?? 0, 2) }}</p>
+                                            <span
+                                                class="font-bengali">৳</span>{{ number_format($user->consultation_fee ?? 0, 2) }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

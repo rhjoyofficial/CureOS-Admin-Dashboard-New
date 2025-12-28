@@ -16,31 +16,25 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with('roles');
+        $users = User::with('roles')
+            // Use 'when' to conditionally apply filters
+            ->when($request->search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->role, function ($query, $role) {
+                $query->whereHas('roles', fn($q) => $q->where('name', $role));
+            })
+            ->when($request->status, function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
-        // Search functionality
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by role
-        if ($request->has('role')) {
-            $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('name', $request->role);
-            });
-        }
-
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $users = $query->latest()->paginate(20);
         $roles = Role::all();
 
         return view('admin.users.index', compact('users', 'roles'));

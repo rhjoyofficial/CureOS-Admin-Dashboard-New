@@ -50,7 +50,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Today's Revenue</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">৳{{ number_format($stats['totalRevenueToday']) }}
+                        <p class="text-3xl font-bold text-gray-900 mt-2"><span class="font-bengali">৳</span>{{ number_format($stats['totalRevenueToday']) }}
                         </p>
                     </div>
                     <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">

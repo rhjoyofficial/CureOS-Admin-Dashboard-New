@@ -91,7 +91,9 @@
                             <div>
                                 <p class="text-sm text-gray-500">Consultation Fee</p>
                                 <p class="font-medium text-gray-900">
-                                    ৳{{ number_format($appointment->doctor->consultation_fee ?? 0, 2) }}</p>
+                                    <span
+                                        class="font-bengali">৳</span>{{ number_format($appointment->doctor->consultation_fee ?? 0, 2) }}
+                                </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500">Phone</p>

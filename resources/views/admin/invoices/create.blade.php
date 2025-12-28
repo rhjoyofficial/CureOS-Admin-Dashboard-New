@@ -85,7 +85,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
                             <div class="text-2xl font-bold text-gray-900" id="totalAmountDisplay">
-                                ৳0.00
+                                <span class="font-bengali">৳</span>0.00
                             </div>
                             <input type="hidden" id="totalAmount" name="total_amount" value="0">
                         </div>

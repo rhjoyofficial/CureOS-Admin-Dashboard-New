@@ -15,7 +15,15 @@
                 <i class="fas fa-plus mr-2"></i> Add New User
             </a>
         </div>
-
+        @if ($errors->any())
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <!-- Filters -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <form method="GET" action="{{ route('admin.users.index') }}"

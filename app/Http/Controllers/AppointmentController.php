@@ -17,35 +17,36 @@ class AppointmentController extends Controller
     {
         $query = Appointment::with(['patient', 'doctor']);
 
-        // Search functionality
-        if ($request->has('search')) {
+        // 1. Search functionality (scoped to ensure OR logic doesn't break other filters)
+        $query->when($request->filled('search'), function ($q) use ($request) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('patient', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%");
-                })->orWhereHas('doctor', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
+            $q->where(function ($sub) use ($search) {
+                $sub->whereHas('patient', function ($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                })->orWhereHas('doctor', function ($d) use ($search) {
+                    $d->where('name', 'like', "%{$search}%");
                 });
             });
-        }
+        });
 
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
+        // 2. Filter by status
+        $query->when($request->filled('status'), function ($q) use ($request) {
+            $q->where('status', $request->status);
+        });
 
-        // Filter by date
-        if ($request->has('date')) {
-            $query->whereDate('appointment_time', $request->date);
-        }
+        // 3. Filter by date
+        $query->when($request->filled('date'), function ($q) use ($request) {
+            $q->whereDate('appointment_time', $request->date);
+        });
 
-        // Filter by doctor
-        if ($request->has('doctor_id')) {
-            $query->where('doctor_id', $request->doctor_id);
-        }
+        // 4. Filter by doctor
+        $query->when($request->filled('doctor_id'), function ($q) use ($request) {
+            $q->where('doctor_id', $request->doctor_id);
+        });
 
-        $appointments = $query->latest()->paginate(20);
+        $appointments = $query->latest()->paginate(20)->withQueryString();
+
         $doctors = User::role('Doctor')->active()->get();
         $patients = Patient::active()->get();
 

@@ -95,4 +95,15 @@ class User extends Authenticatable
     {
         return $this->hasRole('Patient');
     }
+    /**
+     * Scope a query to search users by name, email, or phone.
+     */
+    public function scopeSearch($query, $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('phone', 'like', "%{$term}%");
+        });
+    }
 }

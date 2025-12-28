@@ -110,4 +110,12 @@ class Patient extends Model
             }
         });
     }
+
+    public function getPrescriptionsAttribute()
+    {
+        // Collect all prescriptions from all appointments' consultations
+        return $this->appointments->flatMap(function ($appointment) {
+            return $appointment->consultation ? [$appointment->consultation->prescription] : [];
+        })->filter();
+    }
 }

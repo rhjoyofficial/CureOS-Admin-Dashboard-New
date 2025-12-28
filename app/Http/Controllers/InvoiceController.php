@@ -16,32 +16,30 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Invoice::with(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items']);
+        $query = Invoice::with(['consultation.appointment.patient', 'consultation.appointment.doctor', 'items'])
+            ->whereHas('consultation.appointment.patient');
 
-        // Search functionality
-        if ($request->has('search')) {
+        $query->when($request->filled('search'), function ($q) use ($request) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('consultation.appointment.patient', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
+            $q->where(function ($sub) use ($search) {
+                $sub->whereHas('consultation.appointment.patient', function ($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%");
-                })->orWhereHas('consultation.appointment.doctor', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
+                })->orWhereHas('consultation.appointment.doctor', function ($d) use ($search) {
+                    $d->where('name', 'like', "%{$search}%");
                 });
             });
-        }
+        });
 
-        // Filter by payment status
-        if ($request->has('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
+        $query->when($request->filled('payment_status'), function ($q) use ($request) {
+            $q->where('payment_status', $request->payment_status);
+        });
 
-        // Filter by date range
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-        }
+        $query->when($request->filled(['start_date', 'end_date']), function ($q) use ($request) {
+            $q->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        });
 
-        $invoices = $query->latest()->paginate(20);
+        $invoices = $query->latest()->paginate(20)->withQueryString();
 
         return view('admin.invoices.index', compact('invoices'));
     }

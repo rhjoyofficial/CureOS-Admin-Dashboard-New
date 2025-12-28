@@ -13,27 +13,28 @@ class ConsultationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Consultation::with(['appointment.patient', 'appointment.doctor']);
+        $query = Consultation::with(['appointment.patient', 'appointment.doctor'])
+            ->whereHas('appointment');
 
         // Search functionality
-        if ($request->has('search')) {
+        $query->when($request->filled('search'), function ($q) use ($request) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('appointment.patient', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
+            $q->where(function ($sub) use ($search) {
+                $sub->whereHas('appointment.patient', function ($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%");
-                })->orWhereHas('appointment.doctor', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
+                })->orWhereHas('appointment.doctor', function ($d) use ($search) {
+                    $d->where('name', 'like', "%{$search}%");
                 });
             });
-        }
+        });
 
         // Filter by date
-        if ($request->has('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
+        $query->when($request->filled('date'), function ($q) use ($request) {
+            $q->whereDate('created_at', $request->date);
+        });
 
-        $consultations = $query->latest()->paginate(20);
+        $consultations = $query->latest()->paginate(20)->withQueryString();
 
         return view('admin.consultations.index', compact('consultations'));
     }

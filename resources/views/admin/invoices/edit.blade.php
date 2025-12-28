@@ -56,7 +56,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
                             <div class="text-2xl font-bold text-gray-900" id="totalAmountDisplay">
-                                ৳{{ number_format($invoice->total_amount, 2) }}
+                                <span class="font-bengali">৳</span>{{ number_format($invoice->total_amount, 2) }}
                             </div>
                             <input type="hidden" id="totalAmount" name="total_amount" value="{{ $invoice->total_amount }}">
                         </div>

@@ -112,16 +112,28 @@
 
     <div x-show="open" x-collapse class="ml-8 mt-1 space-y-1">
         <a href="{{ route('admin.reports.index') }}"
-            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100' }}">
+            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.index') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
             Overview
         </a>
-        <a href="{{ route('admin.reports.appointments') }}"
-            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.appointments') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100' }}">
+
+        <a href="{{ route('admin.reports.appointments', ['start_date' => now()->startOfMonth()->toDateString(), 'end_date' => now()->toDateString()]) }}"
+            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.appointments') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
             Appointments
         </a>
-        <a href="{{ route('admin.reports.billing') }}"
-            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.billing') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100' }}">
+
+        <a href="{{ route('admin.reports.billing', ['start_date' => now()->startOfMonth()->toDateString(), 'end_date' => now()->toDateString()]) }}"
+            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.billing') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
             Billing
+        </a>
+
+        <a href="{{ route('admin.reports.patients') }}"
+            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.patients') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }} disabled:opacity-50 pointer-events-none">
+            Patients
+        </a>
+
+        <a href="{{ route('admin.reports.doctors') }}"
+            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.reports.doctors') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }} disabled:opacity-50 pointer-events-none">
+            Doctors
         </a>
     </div>
 </div>

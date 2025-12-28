@@ -81,9 +81,11 @@
                                         </div>
                                         <div>
                                             <div class="font-medium text-gray-900">
-                                                {{ $consultation->appointment->patient->name }}</div>
+                                                {{ $consultation->appointment?->patient?->name ?? 'N/A' }}
+                                            </div>
                                             <div class="text-sm text-gray-500">
-                                                {{ $consultation->appointment->patient->phone }}</div>
+                                                {{ $consultation->appointment?->patient?->phone ?? 'No Phone' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -96,8 +98,9 @@
                                             <i class="fas fa-user-md text-green-600"></i>
                                         </div>
                                         <div>
-                                            <div class="font-medium text-gray-900">Dr.
-                                                {{ $consultation->appointment->doctor->name }}</div>
+                                            <div class="font-medium text-gray-900">
+                                                Dr. {{ $consultation->appointment?->doctor?->name ?? 'Unknown' }}
+                                            </div>
                                             <div class="text-sm text-gray-500">
                                                 {{ $consultation->appointment->doctor->specialization ?? 'General' }}</div>
                                         </div>
