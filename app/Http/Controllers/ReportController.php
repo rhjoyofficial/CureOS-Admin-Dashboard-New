@@ -131,10 +131,39 @@ class ReportController extends Controller
                 if ($request->type === 'appointments') {
                     fputcsv($file, ['ID', 'Date', 'Patient', 'Doctor', 'Status']);
                     foreach ($data as $row) {
-                        fputcsv($file, [$row->id, $row->appointment_time, $row->patient?->name, $row->doctor?->name, $row->status]);
+                        fputcsv($file, [
+                            $row->id,
+                            $row->appointment_time,
+                            $row->patient?->name ?? 'N/A',
+                            $row->doctor?->name ?? 'N/A',
+                            $row->status
+                        ]);
+                    }
+                } elseif ($request->type === 'billing') {
+                    fputcsv($file, ['ID', 'Date', 'Patient', 'Total Amount', 'Payment Status']);
+                    foreach ($data as $row) {
+                        fputcsv($file, [
+                            $row->id,
+                            $row->created_at,
+                            $row->consultation?->appointment?->patient?->name ?? 'N/A',
+                            $row->total_amount,
+                            $row->payment_status
+                        ]);
+                    }
+                } elseif ($request->type === 'patients') {
+                    fputcsv($file, ['ID', 'Patient ID', 'Name', 'Phone', 'Email', 'Gender', 'Status']);
+                    foreach ($data as $row) {
+                        fputcsv($file, [
+                            $row->id,
+                            $row->patient_id ?? 'N/A',
+                            $row->name,
+                            $row->phone ?? 'N/A',
+                            $row->email ?? 'N/A',
+                            $row->gender,
+                            $row->status
+                        ]);
                     }
                 }
-                // ... add logic for other types ...
 
                 fclose($file);
             };

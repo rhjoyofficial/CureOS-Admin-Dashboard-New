@@ -8,6 +8,7 @@ use App\Models\Consultation;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -35,7 +36,8 @@ class InvoiceController extends Controller
             $q->where('payment_status', $request->payment_status);
         });
 
-        $query->when($request->filled(['start_date', 'end_date']), function ($q) use ($request) {
+        // Handle date range filtering with validation for both dates
+        $query->when($request->filled('start_date') && $request->filled('end_date'), function ($q) use ($request) {
             $q->whereBetween('created_at', [$request->start_date, $request->end_date]);
         });
 
@@ -79,19 +81,28 @@ class InvoiceController extends Controller
         // Calculate total amount
         $totalAmount = collect($request->services)->sum('fee');
 
-        $invoice = Invoice::create([
-            'consultation_id' => $request->consultation_id,
-            'payment_status' => $request->payment_status,
-            'total_amount' => $totalAmount,
-        ]);
-
-        // Create invoice items
-        foreach ($request->services as $service) {
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'service_description' => $service['description'],
-                'fee' => $service['fee'],
+        // Use database transaction to ensure data integrity
+        DB::beginTransaction();
+        try {
+            $invoice = Invoice::create([
+                'consultation_id' => $request->consultation_id,
+                'payment_status' => $request->payment_status,
+                'total_amount' => $totalAmount,
             ]);
+
+            // Create invoice items
+            foreach ($request->services as $service) {
+                InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'service_description' => $service['description'],
+                    'fee' => $service['fee'],
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to create invoice. Please try again.'])->withInput();
         }
 
         return redirect()->route('admin.invoices.index')
@@ -131,20 +142,29 @@ class InvoiceController extends Controller
         // Calculate total amount
         $totalAmount = collect($request->services)->sum('fee');
 
-        $invoice->update([
-            'payment_status' => $request->payment_status,
-            'total_amount' => $totalAmount,
-        ]);
-
-        // Delete existing items and create new ones
-        $invoice->items()->delete();
-
-        foreach ($request->services as $service) {
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'service_description' => $service['description'],
-                'fee' => $service['fee'],
+        // Use database transaction to ensure data integrity
+        DB::beginTransaction();
+        try {
+            $invoice->update([
+                'payment_status' => $request->payment_status,
+                'total_amount' => $totalAmount,
             ]);
+
+            // Delete existing items and create new ones
+            $invoice->items()->delete();
+
+            foreach ($request->services as $service) {
+                InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'service_description' => $service['description'],
+                    'fee' => $service['fee'],
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to update invoice. Please try again.'])->withInput();
         }
 
         return redirect()->route('admin.invoices.index')

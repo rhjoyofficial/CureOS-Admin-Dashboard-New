@@ -76,8 +76,9 @@ class DashboardController extends Controller
                 ->today()
                 ->count(),
             'totalPatients' => Appointment::where('doctor_id', $doctor->id)
-                ->distinct('patient_id')
-                ->count('patient_id'),
+                ->select('patient_id')
+                ->distinct()
+                ->count(),
             'upcomingAppointments' => Appointment::where('doctor_id', $doctor->id)
                 ->where('status', 'scheduled')
                 ->where('appointment_time', '>', now())
@@ -128,21 +129,22 @@ class DashboardController extends Controller
     }
 
     // Patient Dashboard
-    // Patient Dashboard
     public function patient()
     {
         // Get the Patient model associated with this user
         $patient = Patient::where('email', auth()->user()->email)->first();
 
         if (!$patient) {
-            // If no patient record found, show empty dashboard
+            // If no patient record found, show empty dashboard with all required variables
             $stats = [
                 'upcomingAppointments' => 0,
                 'completedAppointments' => 0,
                 'pendingInvoices' => 0,
             ];
+            $upcomingAppointments = collect();
+            $recentPrescriptions = collect();
 
-            return view('dashboard.patient', compact('stats'));
+            return view('dashboard.patient', compact('stats', 'upcomingAppointments', 'recentPrescriptions'));
         }
 
         $stats = [

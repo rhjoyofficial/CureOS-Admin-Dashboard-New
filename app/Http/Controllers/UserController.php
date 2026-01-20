@@ -120,7 +120,7 @@ class UserController extends Controller
     {
         $user->load('roles');
         $roles = Role::all();
-        $currentRole = $user->roles->first()->name ?? null;
+        $currentRole = $user->roles->first()?->name;
 
         return view('admin.users.edit', compact('user', 'roles', 'currentRole'));
     }
@@ -147,15 +147,8 @@ class UserController extends Controller
             'consultation_fee' => 'nullable|numeric|min:0',
         ]);
 
-        // Update password if provided
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => 'string|min:8|confirmed',
-            ]);
-            $user->password = Hash::make($request->password);
-        }
-
-        $user->update([
+        // Prepare update data
+        $updateData = [
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
@@ -178,14 +171,26 @@ class UserController extends Controller
             'marital_status' => $request->marital_status,
             'religion' => $request->religion,
             'emergency_contact' => $request->emergency_contact,
-        ]);
+        ];
+
+        // Update password if provided
+        if ($request->filled('password')) {
+            $request->validate([
+                'password' => 'string|min:8|confirmed',
+            ]);
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($updateData);
 
         // Update role
         $currentRole = $user->roles->first();
-        if ($currentRole && $currentRole->name !== $request->role) {
-            $user->removeRole($currentRole->name);
-            $user->assignRole($request->role);
-        } elseif (!$currentRole) {
+        if ($currentRole) {
+            if ($currentRole->name !== $request->role) {
+                $user->removeRole($currentRole->name);
+                $user->assignRole($request->role);
+            }
+        } else {
             $user->assignRole($request->role);
         }
 

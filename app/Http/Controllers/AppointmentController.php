@@ -72,7 +72,7 @@ class AppointmentController extends Controller
         $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'doctor_id' => 'required|exists:users,id',
-            'appointment_time' => 'required|date|after:now',
+            'appointment_time' => 'required|date',
             'status' => 'required|in:scheduled,completed,cancelled,no_show',
         ]);
 
@@ -130,7 +130,8 @@ class AppointmentController extends Controller
         ]);
 
         // Check if time slot is available (exclude current appointment)
-        if ($appointment->status === 'scheduled') {
+        // Only check if the new status is 'scheduled' to prevent double-booking
+        if ($request->status === 'scheduled') {
             $existingAppointment = Appointment::where('doctor_id', $request->doctor_id)
                 ->where('appointment_time', $request->appointment_time)
                 ->where('status', 'scheduled')

@@ -106,7 +106,10 @@ class Patient extends Model
 
         static::creating(function ($patient) {
             if (empty($patient->patient_id)) {
-                $patient->patient_id = 'P-' . str_pad(static::count() + 1, 4, '0', STR_PAD_LEFT);
+                // Use max ID + 1 to prevent race condition, with fallback to 1 if no patients exist
+                $lastPatient = static::withTrashed()->latest('id')->first();
+                $nextId = $lastPatient ? $lastPatient->id + 1 : 1;
+                $patient->patient_id = 'P-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
             }
         });
     }

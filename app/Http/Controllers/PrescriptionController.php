@@ -8,6 +8,7 @@ use App\Models\Consultation;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class PrescriptionController extends Controller
 {
@@ -74,20 +75,29 @@ class PrescriptionController extends Controller
             return back()->withErrors(['consultation_id' => 'This consultation already has a prescription.'])->withInput();
         }
 
-        $prescription = Prescription::create([
-            'consultation_id' => $request->consultation_id,
-            'notes' => $request->notes,
-        ]);
-
-        // Create prescription items
-        foreach ($request->medicines as $medicine) {
-            PrescriptionItem::create([
-                'prescription_id' => $prescription->id,
-                'medicine_name' => $medicine['name'],
-                'dosage' => $medicine['dosage'],
-                'duration' => $medicine['duration'],
-                'instructions' => $medicine['instructions'],
+        // Use database transaction to ensure data integrity
+        DB::beginTransaction();
+        try {
+            $prescription = Prescription::create([
+                'consultation_id' => $request->consultation_id,
+                'notes' => $request->notes,
             ]);
+
+            // Create prescription items
+            foreach ($request->medicines as $medicine) {
+                PrescriptionItem::create([
+                    'prescription_id' => $prescription->id,
+                    'medicine_name' => $medicine['name'],
+                    'dosage' => $medicine['dosage'],
+                    'duration' => $medicine['duration'] ?? null,
+                    'instructions' => $medicine['instructions'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to create prescription. Please try again.'])->withInput();
         }
 
         return redirect()->route('admin.prescriptions.index')
@@ -126,21 +136,30 @@ class PrescriptionController extends Controller
             'medicines.*.instructions' => 'nullable|string',
         ]);
 
-        $prescription->update([
-            'notes' => $request->notes,
-        ]);
-
-        // Delete existing items and create new ones
-        $prescription->items()->delete();
-
-        foreach ($request->medicines as $medicine) {
-            PrescriptionItem::create([
-                'prescription_id' => $prescription->id,
-                'medicine_name' => $medicine['name'],
-                'dosage' => $medicine['dosage'],
-                'duration' => $medicine['duration'],
-                'instructions' => $medicine['instructions'],
+        // Use database transaction to ensure data integrity
+        DB::beginTransaction();
+        try {
+            $prescription->update([
+                'notes' => $request->notes,
             ]);
+
+            // Delete existing items and create new ones
+            $prescription->items()->delete();
+
+            foreach ($request->medicines as $medicine) {
+                PrescriptionItem::create([
+                    'prescription_id' => $prescription->id,
+                    'medicine_name' => $medicine['name'],
+                    'dosage' => $medicine['dosage'],
+                    'duration' => $medicine['duration'] ?? null,
+                    'instructions' => $medicine['instructions'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to update prescription. Please try again.'])->withInput();
         }
 
         return redirect()->route('admin.prescriptions.index')
